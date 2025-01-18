@@ -1,113 +1,152 @@
-# Sakib Al Hasan Cricket Career Data Analysis
+# e-Commerce (Target) Sales Dataset and Data Analysis with Python and SQL
 
-## Project Overview
-This project focuses on collecting, analyzing, and visualizing Sakib Al Hasan's cricket career data. The main objectives are:
+## Overview
+This project demonstrates the process of analyzing an e-commerce (Target) sales dataset using Python and SQL. The workflow includes:
 
-1. **Data Collection**: Scraping career statistics from [ESPNcricinfo](https://www.espncricinfo.com/cricketers/shakib-al-hasan-56143).
-2. **Data Storage**: Saving the collected data in CSV format for further analysis.
-3. **Data Analysis**: Using Python to analyze the data for insights.
-4. **Dashboard Design**: Creating a dynamic dashboard using Power BI to visualize the analysis results.
-
----
-
-## Steps and Tools Used
-
-### 1. Data Collection
-- **Description**: Web scraping is used to extract Sakib Al Hasan's career statistics (batting, bowling, and all-round performance).
-- **Tools**: 
-  - `Python`
-  - Libraries: `requests`, `BeautifulSoup`, `pandas`
-- **Output**: A CSV file named `shakib_al_hasan_stats.csv` containing the scraped data.
-
-### 2. Data Analysis
-- **Description**: Python is used to analyze the collected data. This involves:
-  - Aggregating statistics for various formats (Test, ODI, T20I).
-  - Identifying trends in performance (e.g., top matches, consistency).
-- **Tools**:
-  - `Python`
-  - Libraries: `pandas`, `matplotlib`, `seaborn`
-
-### 3. Dashboard Design
-- **Description**: A Power BI dashboard is created to visualize insights such as:
-  - Batting and bowling averages across formats.
-  - Career progression over the years.
-  - Top performances by opponent and venue.
-- **Tools**:
-  - `Microsoft Power BI`
+1. **Data Loading:** Import CSV files containing e-commerce data into a MySQL database.
+2. **Database Interaction:** Use SQL queries for data extraction and transformation.
+3. **Data Analysis:** Perform in-depth analysis on sales trends, customer behavior, and product performance.
+4. **Visualization:** Use Python libraries to visualize insights.
 
 ---
 
 ## Prerequisites
-1. **Python Setup**:
-   - Install Python (>= 3.8).
-   - Install required libraries:
-     ```bash
-     pip install requests beautifulsoup4 pandas matplotlib seaborn
-     ```
 
-2. **Power BI**:
-   - Install Microsoft Power BI Desktop.
+### Tools and Libraries:
+- **Python 3.x**
+- **MySQL Database**
+- **Python Libraries:**
+  - `pandas`
+  - `mysql.connector`
+  - `matplotlib`
+  - `seaborn`
 
-3. **Environment**:
-   - Ensure internet access for web scraping.
-   - Install a modern web browser for inspecting HTML structures.
+Ensure these tools are installed in your environment before proceeding.
 
 ---
 
-## Usage
+## Dataset Structure
 
-### Step 1: Run the Python Script
-1. Clone the repository:
-   ```bash
-   git clone <repository-url>
-   cd <repository-folder>
-   ```
+The dataset contains the following tables:
 
-2. Run the script to scrape data:
-   ```bash
-   python scrape_shakib_data.py
-   ```
-
-3. Verify the generated `shakib_al_hasan_stats.csv` file.
-
-### Step 2: Analyze Data with Python
-1. Open the `analyze_data.py` script.
-2. Execute the script to generate plots and summary statistics:
-   ```bash
-   python analyze_data.py
-   ```
-
-### Step 3: Create Dashboard in Power BI
-1. Load `shakib_al_hasan_stats.csv` into Power BI.
-2. Design custom visualizations for insights.
-3. Publish the dashboard for sharing or presentations.
+| Table Name   | Columns                                                                                      |
+|--------------|----------------------------------------------------------------------------------------------|
+| `customers`  | `customer_id`, `customer_unique_id`, `customer_zipcode`, `customer_city`, `customer_state`   |
+| `products`   | `product_id`, `product_category`                                                            |
+| `orders`     | `order_id`, `customer_id`, `order_purchase_timestamp`                                        |
+| `order_items`| `order_id`, `order_item_id`, `product_id`, `seller_id`, `shipping_limit_date`, `price`, `freight_value` |
+| `payments`   | `order_id`, `payment_sequential`, `payment_type`, `payment_installments`, `payment_value`    |
+| `sellers`    | `seller_id`, `seller_zip_code_prefix`, `seller_city`, `seller_state`                        |
+| `geolocation`| `geolocation_zip_code_prefix`, `geolocation_lat`, `geolocation_lng`, `geolocation_city`, `geolocation_state` |
 
 ---
 
-## Folder Structure
+## Key Steps
+
+### 1. Loading CSV Files into MySQL
+
+#### Process:
+1. **Read CSV Files:**
+   - Use `pandas` to load CSV files.
+   - Handle missing data by replacing `NaN` with `None`.
+2. **Create SQL Tables:**
+   - Dynamically generate `CREATE TABLE` queries based on column data types.
+3. **Insert Data into Tables:**
+   - Use `INSERT` queries to populate MySQL tables.
+
+#### Example Code:
+```python
+import pandas as pd
+import mysql.connector
+import os
+
+# Connect to the MySQL database
+conn = mysql.connector.connect(
+    host='127.0.0.1',
+    user='root',
+    password='yourpassword',
+    database='ecommerce'
+)
+cursor = conn.cursor()
+
+# Example CSV loading
+df = pd.read_csv('customers.csv')
+df = df.where(pd.notnull(df), None)  # Handle NaN
+
+# Create and insert data (pseudo-code)
+create_table_query = """CREATE TABLE customers (
+    customer_id VARCHAR(50),
+    customer_unique_id VARCHAR(50),
+    customer_zipcode INT,
+    customer_city VARCHAR(100),
+    customer_state VARCHAR(50)
+);"""
+cursor.execute(create_table_query)
+
+for _, row in df.iterrows():
+    insert_query = "INSERT INTO customers VALUES (%s, %s, %s, %s, %s)"
+    cursor.execute(insert_query, tuple(row))
+
+conn.commit()
+conn.close()
 ```
-project-root/
-|-- README.md
-|-- scrape_shakib_data.py     # Script for data scraping
-|-- analyze_data.py           # Script for data analysis
-|-- shakib_al_hasan_stats.csv # Collected data (output)
-|-- powerbi_dashboard.pbix    # Power BI dashboard file
+
+---
+
+### 2. Data Analysis with SQL
+
+#### Sample Analysis 1: Orders Per Month
+**Objective:** Calculate the number of orders per month in 2018.
+
+**SQL Query:**
+```sql
+SELECT
+    MONTHNAME(order_purchase_timestamp) AS month,
+    COUNT(order_id) AS order_count
+FROM orders
+WHERE YEAR(order_purchase_timestamp) = 2018
+GROUP BY month
+ORDER BY MONTH(order_purchase_timestamp);
+```
+
+#### Sample Analysis 2: Average Products Per Order by City
+**Objective:** Find the average number of products per order grouped by customer city.
+
+**SQL Query:**
+```sql
+SELECT
+    customers.customer_city,
+    AVG(order_items.order_item_id) AS avg_products_per_order
+FROM customers
+JOIN orders ON customers.customer_id = orders.customer_id
+JOIN order_items ON orders.order_id = order_items.order_id
+GROUP BY customers.customer_city
+ORDER BY avg_products_per_order DESC;
 ```
 
 ---
 
-## Future Improvements
-1. Automate data updates using a scheduler.
-2. Integrate more advanced analysis using machine learning.
-3. Add more players' data for comparative analysis.
+### 3. Visualization
+
+#### Tools Used:
+- **Matplotlib** and **Seaborn** for generating bar charts, pie charts, and histograms.
+
+#### Example Code:
+```python
+import matplotlib.pyplot as plt
+
+# Bar chart for monthly orders
+plt.figure(figsize=(10, 6))
+plt.bar(df['month'], df['order_count'], color='skyblue', width=0.6)
+plt.title('Orders Per Month (2018)')
+plt.xlabel('Month')
+plt.ylabel('Number of Orders')
+plt.xticks(rotation=45)
+plt.tight_layout()
+plt.show()
+```
 
 ---
 
-## License
-This project is open-source and available under the [MIT License](LICENSE).
-
----
-
-## Author
-[Your Name]  
-[Your Contact Information]
+## Summary
+This project showcases the end-to-end workflow for analyzing e-commerce sales data using Python and SQL. It covers data ingestion, transformation, analysis, and visualization to provide actionable insights.
