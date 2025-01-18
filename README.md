@@ -193,5 +193,14 @@ plt.show()
 
 ---
 
+---
+
+## Dataset
+The dataset used in this project can be accessed from the following link:
+[Download e-Commerce Dataset](https://www.kaggle.com/datasets/devarajv88/target-dataset?select=products.csv)
+
+---
+---
+
 ## Summary
 This project showcases the end-to-end workflow for analyzing e-commerce sales data using Python and SQL. It covers data ingestion, transformation, analysis, and visualization to provide actionable insights.
