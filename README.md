@@ -73,15 +73,15 @@ csv_files = [
 
 # Connect to the MySQL database
 conn = mysql.connector.connect(
-    host='127.0.0.1',
+    host='',
     user='root',
-    password='Roksana@2000',
-    database='XYZ_Company'
+    password='',
+    database='Database_Name'
 )
 cursor = conn.cursor()
 
 # Folder containing the CSV files
-folder_path = 'F:/DATA Analysis/ECOMARCEdATASET'
+folder_path = 'your_CSV_Data_Folder_Path'
 
 # Function to map pandas dtypes to SQL data types
 def get_sql_type(dtype):
