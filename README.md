@@ -60,35 +60,80 @@ import pandas as pd
 import mysql.connector
 import os
 
+# List of CSV files and their corresponding table names
+csv_files = [
+    ('customers.csv', 'customers'),
+    ('orders.csv', 'orders'),
+    ('products.csv', 'products'),
+    ('payments.csv', 'payments'),  # Added payments.csv for specific handling
+    ('sellers.csv', 'sellers'),
+    ('order_items.csv', 'order_items'),
+    ('geolocation.csv', 'geolocation') 
+]
+
 # Connect to the MySQL database
 conn = mysql.connector.connect(
     host='127.0.0.1',
     user='root',
-    password='yourpassword',
-    database='ecommerce'
+    password='Roksana@2000',
+    database='XYZ_Company'
 )
 cursor = conn.cursor()
 
-# Example CSV loading
-df = pd.read_csv('customers.csv')
-df = df.where(pd.notnull(df), None)  # Handle NaN
+# Folder containing the CSV files
+folder_path = 'F:/DATA Analysis/ECOMARCEdATASET'
 
-# Create and insert data (pseudo-code)
-create_table_query = """CREATE TABLE customers (
-    customer_id VARCHAR(50),
-    customer_unique_id VARCHAR(50),
-    customer_zipcode INT,
-    customer_city VARCHAR(100),
-    customer_state VARCHAR(50)
-);"""
-cursor.execute(create_table_query)
+# Function to map pandas dtypes to SQL data types
+def get_sql_type(dtype):
+    if pd.api.types.is_integer_dtype(dtype):
+        return 'INT'
+    elif pd.api.types.is_float_dtype(dtype):
+        return 'FLOAT'
+    elif pd.api.types.is_bool_dtype(dtype):
+        return 'BOOLEAN'
+    elif pd.api.types.is_datetime64_any_dtype(dtype):
+        return 'DATETIME'
+    else:
+        return 'TEXT'
 
-for _, row in df.iterrows():
-    insert_query = "INSERT INTO customers VALUES (%s, %s, %s, %s, %s)"
-    cursor.execute(insert_query, tuple(row))
+# Process each CSV file
+for csv_file, table_name in csv_files:
+    file_path = os.path.join(folder_path, csv_file)
+    
+    # Read the CSV file into a pandas DataFrame
+    df = pd.read_csv(file_path)
+    
+    # Replace NaN with None to handle SQL NULL
+    df = df.where(pd.notnull(df), None)
+    
+    # Debugging: Check for NaN values
+    print(f"Processing {csv_file}")
+    print(f"NaN values before replacement:\n{df.isnull().sum()}\n")
 
-conn.commit()
+    # Clean column names
+    df.columns = [col.replace(' ', '_').replace('-', '_').replace('.', '_') for col in df.columns]
+
+    # Generate the CREATE TABLE statement with appropriate data types
+    columns = ', '.join([f'`{col}` {get_sql_type(df[col].dtype)}' for col in df.columns])
+    create_table_query = f'CREATE TABLE IF NOT EXISTS `{table_name}` ({columns})'
+    cursor.execute(create_table_query)
+
+    # Insert DataFrame data into the MySQL table
+    for _, row in df.iterrows():
+        # Convert row to tuple and handle NaN/None explicitly
+        values = tuple(None if pd.isna(x) else x for x in row)
+        sql = f"INSERT INTO `{table_name}` ({', '.join(['`' + col + '`' for col in df.columns])}) VALUES ({', '.join(['%s'] * len(row))})"
+        cursor.execute(sql, values)
+
+    # Commit the transaction for the current CSV file
+    conn.commit()
+
+# Close the connection
+cursor.close()
 conn.close()
+
+print("Data successfully loaded into the database.")
+
 ```
 
 ---
